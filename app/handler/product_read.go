@@ -3,6 +3,8 @@ package handler
 import (
 	"log/slog"
 	"product-service/app/domain"
+	"product-service/app/handler/response"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -18,27 +20,33 @@ func NewProductReadHandler(productUsecase domain.ProductReadUsecase, validator *
 }
 
 func (h *productReadHandler) GetByID(c *fiber.Ctx) error {
-	id := c.Params("id")
-	if id == "" {
+	idstr := c.Params("id")
+	if idstr == "" {
 		slog.ErrorContext(c.Context(), "[productReadHandler] GetByID", "params", "product ID is empty")
-		return c.Status(fiber.StatusBadRequest).JSON(Error(domain.ErrBadRequest))
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(domain.ErrBadRequest))
+	}
+
+	id, err := strconv.ParseInt(idstr, 10, 64)
+	if err != nil || id <= 0 {
+		slog.ErrorContext(c.Context(), "[productReadHandler] GetByID", "params:"+idstr, err)
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(domain.ErrBadRequest))
 	}
 
 	product, err := h.productUsecase.GetByID(c.Context(), id)
 	if err != nil {
 		slog.ErrorContext(c.Context(), "[productReadHandler] GetByID", "usecase", err)
-		status, response := FromError(err)
+		status, response := response.FromError(err)
 		return c.Status(status).JSON(response)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(Success(product))
+	return c.Status(fiber.StatusOK).JSON(response.Success(product))
 }
 
 func (h *productReadHandler) GetListByQuery(c *fiber.Ctx) error {
 	var query domain.ProductQuery
 	if err := c.QueryParser(&query); err != nil {
 		slog.ErrorContext(c.Context(), "[productReadHandler] GetListByQuery", "query", err)
-		return c.Status(fiber.StatusBadRequest).JSON(Error(domain.ErrBadRequest))
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(domain.ErrBadRequest))
 	}
 
 	if query.Page < 1 {
@@ -60,9 +68,9 @@ func (h *productReadHandler) GetListByQuery(c *fiber.Ctx) error {
 	products, err := h.productUsecase.GetListByQuery(c.Context(), query)
 	if err != nil {
 		slog.ErrorContext(c.Context(), "[productReadHandler] GetListByQuery", "usecase", err)
-		status, response := FromError(err)
+		status, response := response.FromError(err)
 		return c.Status(status).JSON(response)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(Success(products))
+	return c.Status(fiber.StatusOK).JSON(response.Success(products))
 }

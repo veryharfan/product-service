@@ -11,10 +11,11 @@ import (
 )
 
 type Config struct {
-	Port             string                 `mapstructure:"PORT" validate:"required"`
-	Db               DbConfig               `mapstructure:",squash"`
-	Redis            RedisConfig            `mapstructure:",squash"`
-	WarehouseService WarehouseServiceConfig `mapstructure:",squash"`
+	Port               string                 `mapstructure:"PORT" validate:"required"`
+	InternalAuthHeader string                 `mapstructure:"INTERNAL_AUTH_HEADER" validate:"required"`
+	Db                 DbConfig               `mapstructure:",squash"`
+	Redis              RedisConfig            `mapstructure:",squash"`
+	WarehouseService   WarehouseServiceConfig `mapstructure:",squash"`
 }
 
 type DbConfig struct {
@@ -75,6 +76,8 @@ func InitConfig(ctx context.Context) (*Config, error) {
 	// Debug: Print environment variables we're looking for
 	envVars := []string{
 		"PORT",
+		"INTERNAL_AUTH_HEADER",
+		"WAREHOUSE_SERVICE_HOST",
 		"DB_HOST",
 		"DB_PORT",
 		"DB_USERNAME",

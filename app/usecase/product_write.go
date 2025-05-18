@@ -1,0 +1,72 @@
+package usecase
+
+import (
+	"context"
+	"log/slog"
+	"product-service/app/domain"
+	"product-service/config"
+)
+
+type productWriteUsecase struct {
+	productReadRepo  domain.ProductReadRepository
+	productWriteRepo domain.ProductWriteRepository
+	cfg              *config.Config
+}
+
+func NewProductWriteUsecase(productReadRepo domain.ProductReadRepository, productWriteRepo domain.ProductWriteRepository, cfg *config.Config) domain.ProductWriteUsecase {
+	return &productWriteUsecase{productReadRepo, productWriteRepo, cfg}
+}
+
+func (u *productWriteUsecase) Create(ctx context.Context, req *domain.CreateProductRequest) (*domain.CreateProductResponse, error) {
+	product := &domain.Product{
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       req.Price,
+		Category:    req.Category,
+		ImageURL:    req.ImageURL,
+		ShopID:      req.ShopID,
+		Active:      true,
+	}
+	if err := u.productWriteRepo.Create(ctx, product); err != nil {
+		slog.ErrorContext(ctx, "[productWriteUsecase] Create", "repository", err)
+		return nil, err
+	}
+
+	slog.InfoContext(ctx, "[productWriteUsecase] success Create", "product_id", product.ID)
+	return &domain.CreateProductResponse{
+		ID: product.ID,
+	}, nil
+}
+
+func (u *productWriteUsecase) Update(ctx context.Context, id int64, req *domain.UpdateProductRequest) (*domain.Product, error) {
+	product, err := u.productReadRepo.GetByID(ctx, id)
+	if err != nil {
+		slog.ErrorContext(ctx, "[productWriteUsecase] Update", "GetByID", err)
+		return nil, err
+	}
+
+	product.Name = req.Name
+	product.Description = req.Description
+	product.Price = req.Price
+	product.Category = req.Category
+	product.ImageURL = req.ImageURL
+	product.ShopID = req.ShopID
+
+	if err := u.productWriteRepo.Update(ctx, product); err != nil {
+		slog.ErrorContext(ctx, "[productWriteUsecase] Update", "Update", err)
+		return nil, err
+	}
+
+	slog.InfoContext(ctx, "[productWriteUsecase] success Update", "product_id", product.ID)
+	return product, nil
+}
+
+func (u *productWriteUsecase) SetActiveStatus(ctx context.Context, id int64, active bool) error {
+	if err := u.productWriteRepo.SetActiveStatus(ctx, id, active); err != nil {
+		slog.ErrorContext(ctx, "[productWriteUsecase] SetActiveStatus", "SetActiveStatus", err)
+		return err
+	}
+	slog.InfoContext(ctx, "[productWriteUsecase] success SetActiveStatus", "product_id", id)
+
+	return nil
+}

@@ -3,25 +3,23 @@ package domain
 import (
 	"context"
 	"time"
-
-	"github.com/gofrs/uuid/v5"
 )
 
 type Product struct {
-	ID          uuid.UUID `json:"id"`
+	ID          int64     `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Price       int64     `json:"price"`
 	Category    string    `json:"category"`
 	ImageURL    string    `json:"image_url"`
-	ShopID      uuid.UUID `json:"shop_id"`
-	IsActive    bool      `json:"is_active"`
+	ShopID      int64     `json:"shop_id"`
+	Active      bool      `json:"active"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type ProductQuery struct {
-	ShopID    string `query:"shop_id"`
+	ShopID    int64  `query:"shop_id"`
 	Category  string `query:"category"`
 	MinPrice  int64  `query:"min_price"`
 	MaxPrice  int64  `query:"max_price"`
@@ -33,24 +31,63 @@ type ProductQuery struct {
 }
 
 type ProductResponse struct {
-	ID          uuid.UUID `json:"id"`
+	ID          int64     `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Price       int64     `json:"price"`
 	Category    string    `json:"category"`
 	ImageURL    string    `json:"image_url"`
-	ShopID      uuid.UUID `json:"shop_id"`
+	ShopID      int64     `json:"shop_id"`
 	Stock       int       `json:"stock"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+type CreateProductRequest struct {
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description" validate:"required"`
+	Price       int64  `json:"price" validate:"required"`
+	Category    string `json:"category" validate:"required"`
+	ImageURL    string `json:"image_url" validate:"required"`
+	ShopID      int64  `json:"shop_id" validate:"required"`
+}
+
+type CreateProductResponse struct {
+	ID int64 `json:"id"`
+}
+
+type UpdateProductRequest struct {
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description" validate:"required"`
+	Price       int64  `json:"price" validate:"required"`
+	Category    string `json:"category" validate:"required"`
+	ImageURL    string `json:"image_url" validate:"required"`
+	ShopID      int64  `json:"shop_id" validate:"required"`
+	Active      bool   `json:"active" validate:"required"`
+}
+
+type SetActiveStatusRequest struct {
+	Active bool `json:"active"`
+}
+
 type ProductReadRepository interface {
-	GetByID(ctx context.Context, id string) (*Product, error)
+	GetByID(ctx context.Context, id int64) (*Product, error)
 	GetListByQuery(ctx context.Context, query ProductQuery) ([]*Product, error)
 }
 
 type ProductReadUsecase interface {
-	GetByID(ctx context.Context, id string) (*ProductResponse, error)
+	GetByID(ctx context.Context, id int64) (*ProductResponse, error)
 	GetListByQuery(ctx context.Context, query ProductQuery) ([]*Product, error)
+}
+
+type ProductWriteRepository interface {
+	Create(ctx context.Context, product *Product) error
+	Update(ctx context.Context, product *Product) error
+	SetActiveStatus(ctx context.Context, id int64, active bool) error
+}
+
+type ProductWriteUsecase interface {
+	Create(ctx context.Context, product *CreateProductRequest) (*CreateProductResponse, error)
+	Update(ctx context.Context, id int64, product *UpdateProductRequest) (*Product, error)
+	SetActiveStatus(ctx context.Context, id int64, active bool) error
 }

@@ -13,11 +13,11 @@ type productReadUsecase struct {
 	cfg             *config.Config
 }
 
-func NewUserUsecase(productReadRepo domain.ProductReadRepository, warehouseRepo domain.WarehouseRepository, cfg *config.Config) domain.ProductReadUsecase {
+func NewProductReadUsecase(productReadRepo domain.ProductReadRepository, warehouseRepo domain.WarehouseRepository, cfg *config.Config) domain.ProductReadUsecase {
 	return &productReadUsecase{productReadRepo, warehouseRepo, cfg}
 }
 
-func (u *productReadUsecase) GetByID(ctx context.Context, id string) (*domain.ProductResponse, error) {
+func (u *productReadUsecase) GetByID(ctx context.Context, id int64) (*domain.ProductResponse, error) {
 	product, err := u.productReadRepo.GetByID(ctx, id)
 	if err != nil {
 		slog.ErrorContext(ctx, "[productReadUsecase] GetByID", "error", err)

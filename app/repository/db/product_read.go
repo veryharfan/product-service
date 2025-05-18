@@ -17,12 +17,12 @@ func NewProductReadRepository(db *sql.DB) domain.ProductReadRepository {
 	return &productReadRepository{db}
 }
 
-func (r *productReadRepository) GetByID(ctx context.Context, id string) (*domain.Product, error) {
-	query := `SELECT id, name, description, price, category, image_url, shop_id, is_active, created_at, updated_at FROM products WHERE id = $1 AND is_active = true`
+func (r *productReadRepository) GetByID(ctx context.Context, id int64) (*domain.Product, error) {
+	query := `SELECT id, name, description, price, category, image_url, shop_id, active, created_at, updated_at FROM products WHERE id = $1 AND active = true`
 	row := r.conn.QueryRowContext(ctx, query, id)
 
 	var product domain.Product
-	if err := row.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Category, &product.ImageURL, &product.ShopID, &product.IsActive, &product.CreatedAt, &product.UpdatedAt); err != nil {
+	if err := row.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Category, &product.ImageURL, &product.ShopID, &product.Active, &product.CreatedAt, &product.UpdatedAt); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, domain.ErrNotFound
 		}
@@ -34,12 +34,12 @@ func (r *productReadRepository) GetByID(ctx context.Context, id string) (*domain
 }
 
 func (r *productReadRepository) GetListByQuery(ctx context.Context, query domain.ProductQuery) ([]*domain.Product, error) {
-	sqlQuery := `SELECT id, name, description, price, category, image_url, shop_id, is_active, created_at, updated_at FROM products WHERE is_active = true`
+	sqlQuery := `SELECT id, name, description, price, category, image_url, shop_id, active, created_at, updated_at FROM products WHERE active = true`
 	args := []any{}
 
 	placeholderIndex := 1 // Start placeholder index
 
-	if query.ShopID != "" {
+	if query.ShopID > 0 {
 		sqlQuery += fmt.Sprintf(" AND shop_id = $%d", placeholderIndex)
 		args = append(args, query.ShopID)
 		placeholderIndex++
@@ -89,7 +89,7 @@ func (r *productReadRepository) GetListByQuery(ctx context.Context, query domain
 	var products []*domain.Product
 	for rows.Next() {
 		var product domain.Product
-		if err := rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Category, &product.ImageURL, &product.ShopID, &product.IsActive, &product.CreatedAt, &product.UpdatedAt); err != nil {
+		if err := rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Category, &product.ImageURL, &product.ShopID, &product.Active, &product.CreatedAt, &product.UpdatedAt); err != nil {
 			slog.ErrorContext(ctx, "[productReadRepository] GetListByQuery", "scan", err)
 			return nil, domain.ErrInternal
 		}

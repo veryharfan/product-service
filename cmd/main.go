@@ -56,11 +56,14 @@ func main() {
 
 	reqValidator := validator.New()
 	productReadRepo := db.NewProductReadRepository(dbConn)
-	warehouseRepo := warehouse.NewWarehouseRepository(redisClient, cfg.WarehouseService.Host, time.Duration(0))
+	productWriteRepo := db.NewProductWriteRepository(dbConn)
+	warehouseRepo := warehouse.NewWarehouseRepository(redisClient, time.Duration(0), cfg.WarehouseService.Host, cfg.InternalAuthHeader)
 
-	productReadUsecase := usecase.NewUserUsecase(productReadRepo, warehouseRepo, cfg)
+	productReadUsecase := usecase.NewProductReadUsecase(productReadRepo, warehouseRepo, cfg)
+	productWriteUsecase := usecase.NewProductWriteUsecase(productReadRepo, productWriteRepo, cfg)
 
 	productReadHandler := handler.NewProductReadHandler(productReadUsecase, reqValidator)
+	productWriteHandler := handler.NewProductWriteHandler(productWriteUsecase, reqValidator)
 
 	// Initialize HTTP web framework
 	app := fiber.New()
@@ -80,7 +83,7 @@ func main() {
 	}))
 	app.Use(middleware.RequestIDMiddleware())
 
-	handler.SetupRouter(app, productReadHandler)
+	handler.SetupRouter(app, productReadHandler, productWriteHandler, cfg)
 
 	go func() {
 		if err := app.Listen(":" + cfg.Port); err != nil {

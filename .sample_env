@@ -1,5 +1,6 @@
 # Server Configuration
 PORT=8080
+INTERNAL_AUTH_HEADER=your_internal_auth_header
 
 # Database Configuration
 DB_HOST=localhost
@@ -14,4 +15,4 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 
 # Warehouse Service Configuration
-WAREHOUSE_SERVICE_HOST=localhost:8082
+WAREHOUSE_SERVICE_HOST=localhost:8085
