@@ -9,11 +9,11 @@ import (
 
 type productReadUsecase struct {
 	productReadRepo domain.ProductReadRepository
-	warehouseRepo   domain.WarehouseRepository
+	warehouseRepo   domain.StockRepository
 	cfg             *config.Config
 }
 
-func NewProductReadUsecase(productReadRepo domain.ProductReadRepository, warehouseRepo domain.WarehouseRepository, cfg *config.Config) domain.ProductReadUsecase {
+func NewProductReadUsecase(productReadRepo domain.ProductReadRepository, warehouseRepo domain.StockRepository, cfg *config.Config) domain.ProductReadUsecase {
 	return &productReadUsecase{productReadRepo, warehouseRepo, cfg}
 }
 

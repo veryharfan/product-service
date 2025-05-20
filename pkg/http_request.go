@@ -2,7 +2,12 @@ package pkg
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"product-service/app/handler/response"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 type AuthInternalHeader string
@@ -20,4 +25,22 @@ func AddRequestHeader(ctx context.Context, internalAuthHeader string, httpReques
 	}
 
 	httpRequest.Header.Add(string(AuthInternalHeaderKey), internalAuthHeader)
+}
+
+func DecodeResponseBody[T any](resp *http.Response, v T) error {
+	var respBody response.Response
+	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
+		return fmt.Errorf("failed to decode response body: %w", err)
+	}
+
+	if !respBody.Success {
+		return fmt.Errorf("response error: %s", respBody.Error)
+	}
+
+	err := mapstructure.Decode(respBody.Data, &v)
+	if err != nil {
+		return fmt.Errorf("failed to map response data: %w", err)
+	}
+
+	return nil
 }

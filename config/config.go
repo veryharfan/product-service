@@ -16,6 +16,7 @@ type Config struct {
 	Db                 DbConfig               `mapstructure:",squash"`
 	Redis              RedisConfig            `mapstructure:",squash"`
 	WarehouseService   WarehouseServiceConfig `mapstructure:",squash"`
+	Nats               NatsConfig             `mapstructure:",squash"`
 }
 
 type DbConfig struct {
@@ -32,6 +33,11 @@ type RedisConfig struct {
 	Port     string `mapstructure:"REDIS_PORT" validate:"required"`
 	Password string `mapstructure:"REDIS_PASSWORD"`
 	Db       int    `mapstructure:"REDIS_DB"`
+}
+
+type NatsConfig struct {
+	Url        string `mapstructure:"NATS_URL" validate:"required"`
+	StreamName string `mapstructure:"NATS_STREAM_NAME" validate:"required"`
 }
 
 type WarehouseServiceConfig struct {

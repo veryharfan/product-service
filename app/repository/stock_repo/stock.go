@@ -1,18 +1,18 @@
-package warehouse
+package stockrepo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"product-service/app/domain"
 	"product-service/pkg"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
-type warehouseRepository struct {
+type stockRepository struct {
 	redis              *redis.Client
 	ttl                time.Duration
 	httpClient         *http.Client
@@ -20,8 +20,8 @@ type warehouseRepository struct {
 	internalAuthHeader string
 }
 
-func NewWarehouseRepository(redis *redis.Client, ttl time.Duration, baseURL string, internalAuthHeader string) *warehouseRepository {
-	return &warehouseRepository{
+func NewStockRepository(redis *redis.Client, ttl time.Duration, baseURL string, internalAuthHeader string) domain.StockRepository {
+	return &stockRepository{
 		redis:              redis,
 		ttl:                ttl,
 		httpClient:         &http.Client{Timeout: 30 * time.Second},
@@ -30,7 +30,7 @@ func NewWarehouseRepository(redis *redis.Client, ttl time.Duration, baseURL stri
 	}
 }
 
-func (r *warehouseRepository) GetStock(ctx context.Context, productID int64) (int, error) {
+func (r *stockRepository) GetStock(ctx context.Context, productID int64) (int, error) {
 	stock, err := r.redis.Get(ctx, r.key(productID)).Int()
 	if err != nil {
 		slog.WarnContext(ctx, "[GetStock] Cache miss or error retrieving stock", "productID", productID, "error", err)
@@ -39,8 +39,8 @@ func (r *warehouseRepository) GetStock(ctx context.Context, productID int64) (in
 	return stock, nil
 }
 
-func (r *warehouseRepository) FetchStockFromService(ctx context.Context, productID int64) (int, error) {
-	url := fmt.Sprintf("%s/internal/warehouse-service/stocks/products/%d", r.baseURL, productID)
+func (r *stockRepository) FetchStockFromService(ctx context.Context, productID int64) (int, error) {
+	url := fmt.Sprintf("%s/internal/warehouse-service/products/%d/stocks", r.baseURL, productID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		slog.ErrorContext(ctx, "[FetchStockFromService] Failed to create HTTP request", "productID", productID, "error", err)
@@ -56,26 +56,21 @@ func (r *warehouseRepository) FetchStockFromService(ctx context.Context, product
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		slog.WarnContext(ctx, "[FetchStockFromService] Non-OK response from warehouse service", "productID", productID, "statusCode", resp.StatusCode)
-		return 0, fmt.Errorf("warehouse-service returned %d", resp.StatusCode)
-	}
-
 	var data []ProductStockResponse
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+	if err := pkg.DecodeResponseBody(resp, &data); err != nil {
 		slog.ErrorContext(ctx, "[FetchStockFromService] Failed to decode response body", "productID", productID, "error", err)
 		return 0, err
 	}
 
-	var stock int
+	var stock int64
 	for _, item := range data {
-		stock += item.Quantity - item.Reserved
+		stock += item.Available
 	}
 	slog.InfoContext(ctx, "[FetchStockFromService] Stock fetched from warehouse service", "productID", productID, "stock", stock)
-	return stock, nil
+	return int(stock), nil
 }
 
-func (r *warehouseRepository) CacheStock(ctx context.Context, productID int64, stock int) error {
+func (r *stockRepository) CacheStock(ctx context.Context, productID int64, stock int) error {
 	err := r.redis.Set(ctx, r.key(productID), stock, r.ttl).Err()
 	if err != nil {
 		slog.ErrorContext(ctx, "[CacheStock] Failed to cache stock", "productID", productID, "stock", stock, "error", err)
@@ -85,6 +80,6 @@ func (r *warehouseRepository) CacheStock(ctx context.Context, productID int64, s
 	return nil
 }
 
-func (r *warehouseRepository) key(productID int64) string {
+func (r *stockRepository) key(productID int64) string {
 	return fmt.Sprintf("stock:product:%d", productID)
 }

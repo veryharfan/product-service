@@ -15,10 +15,9 @@ func SetupRouter(app *fiber.App, readProductHandler *productReadHandler, writePr
 	productGroup.Get("/products", readProductHandler.GetListByQuery)
 
 	// write product routes
-	internalGroup := app.Group("/internal/product-service")
-	internalGroup.Use(middleware.AuthInternal(cfg))
+	internalGroup := app.Group("/internal/product-service").Use(middleware.AuthInternal(cfg))
 
 	internalGroup.Post("/products", writeProductHandler.Create)
-	internalGroup.Put("/products/:id", writeProductHandler.Update)
+
 	internalGroup.Patch("/products/:id", writeProductHandler.SetActiveStatus)
 }

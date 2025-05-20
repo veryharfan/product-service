@@ -16,8 +16,8 @@ func NewProductWriteRepository(db *sql.DB) domain.ProductWriteRepository {
 }
 
 func (r *productWriteRepository) Create(ctx context.Context, product *domain.Product) error {
-	query := `INSERT INTO products (name, description, price, category, image_url, shop_id, active, created_at, updated_at) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`
+	query := `INSERT INTO products (name, description, price, category, image_url, shop_id, active) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id , created_at, updated_at`
 
 	err := r.conn.QueryRowContext(ctx, query,
 		product.Name,
@@ -26,11 +26,10 @@ func (r *productWriteRepository) Create(ctx context.Context, product *domain.Pro
 		product.Category,
 		product.ImageURL,
 		product.ShopID,
-		product.Active,
-		product.CreatedAt,
-		product.UpdatedAt).Scan(&product.ID)
+		product.Active).
+		Scan(&product.ID, &product.CreatedAt, &product.UpdatedAt)
 	if err != nil {
-		slog.ErrorContext(ctx, "[productWriteRepository] Create", "query", err)
+		slog.ErrorContext(ctx, "[productWriteRepository] Create", "scan", err)
 		return domain.ErrInternal
 	}
 
@@ -50,7 +49,7 @@ func (r *productWriteRepository) Update(ctx context.Context, product *domain.Pro
 		product.UpdatedAt,
 		product.ID)
 	if err != nil {
-		slog.ErrorContext(ctx, "[productWriteRepository] Update", "query", err)
+		slog.ErrorContext(ctx, "[productWriteRepository] Update", "exec", err)
 		return domain.ErrInternal
 	}
 
@@ -61,7 +60,7 @@ func (r *productWriteRepository) SetActiveStatus(ctx context.Context, id int64, 
 	query := `UPDATE products SET active = $1 WHERE id = $2`
 	_, err := r.conn.ExecContext(ctx, query, active, id)
 	if err != nil {
-		slog.ErrorContext(ctx, "[productWriteRepository] SetActiveStatus", "query", err)
+		slog.ErrorContext(ctx, "[productWriteRepository] SetActiveStatus", "exec", err)
 		return domain.ErrInternal
 	}
 
