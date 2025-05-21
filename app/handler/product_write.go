@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"product-service/app/domain"
 	"product-service/app/handler/response"
+	"product-service/pkg/ctxutil"
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
@@ -31,7 +32,13 @@ func (h *productWriteHandler) Create(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(domain.ErrBadRequest))
 	}
 
-	res, err := h.productUsecase.Create(c.Context(), &product)
+	shopID, err := ctxutil.GetShopIDCtx(c.Context())
+	if err != nil {
+		slog.ErrorContext(c.Context(), "[productHandler] Create", "getShopIDCtx", err)
+		return c.Status(fiber.StatusUnauthorized).JSON(response.Error(domain.ErrUnauthorized))
+	}
+
+	res, err := h.productUsecase.Create(c.Context(), shopID, &product)
 	if err != nil {
 		slog.ErrorContext(c.Context(), "[productWriteHandler] Create", "usecase", err)
 		status, response := response.FromError(err)

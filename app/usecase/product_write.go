@@ -19,14 +19,14 @@ func NewProductWriteUsecase(productReadRepo domain.ProductReadRepository, produc
 	return &productWriteUsecase{productReadRepo, productWriteRepo, stockRepo, cfg}
 }
 
-func (u *productWriteUsecase) Create(ctx context.Context, req *domain.CreateProductRequest) (*domain.CreateProductResponse, error) {
+func (u *productWriteUsecase) Create(ctx context.Context, shopID int64, req *domain.CreateProductRequest) (*domain.CreateProductResponse, error) {
 	product := &domain.Product{
 		Name:        req.Name,
 		Description: req.Description,
 		Price:       req.Price,
 		Category:    req.Category,
 		ImageURL:    req.ImageURL,
-		ShopID:      req.ShopID,
+		ShopID:      shopID,
 		Active:      true,
 	}
 

@@ -50,7 +50,6 @@ type CreateProductRequest struct {
 	Price       int64  `json:"price" validate:"required"`
 	Category    string `json:"category" validate:"required"`
 	ImageURL    string `json:"image_url" validate:"required"`
-	ShopID      int64  `json:"shop_id" validate:"required"`
 }
 
 type CreateProductResponse struct {
@@ -91,7 +90,7 @@ type ProductWriteRepository interface {
 }
 
 type ProductWriteUsecase interface {
-	Create(ctx context.Context, product *CreateProductRequest) (*CreateProductResponse, error)
+	Create(ctx context.Context, shopID int64, product *CreateProductRequest) (*CreateProductResponse, error)
 	Update(ctx context.Context, id int64, product *UpdateProductRequest) (*Product, error)
 	SetActiveStatus(ctx context.Context, id int64, active bool) error
 }
