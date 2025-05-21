@@ -47,11 +47,14 @@ func Auth(secretKey string) fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(response.Error(domain.ErrUnauthorized))
 		}
 
-		c.Locals(ctxutil.UserIDKey, claims.UID)
-
-		if claims.SID != nil {
-			c.Locals(ctxutil.ShopIDKey, *claims.SID)
+		if claims.SID == nil {
+			slog.ErrorContext(c.Context(), "[middleware] Auth", "shopID", "nil")
+			return c.Status(fiber.StatusUnauthorized).JSON(response.Error(domain.ErrUnauthorized))
 		}
+
+		c.Locals(ctxutil.UserIDKey, claims.UID)
+		c.Locals(ctxutil.ShopIDKey, *claims.SID)
+
 		return c.Next()
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"product-service/app/handler/response"
+	"product-service/pkg/ctxutil"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -20,7 +21,7 @@ func AddRequestHeader(ctx context.Context, internalAuthHeader string, httpReques
 	httpRequest.Header.Add("Content-Type", "application/json")
 	httpRequest.Header.Add("Accept", "application/json")
 
-	if reqID := ctx.Value("request_id"); reqID != nil {
+	if reqID := ctx.Value(ctxutil.RequestIDKey); reqID != nil {
 		httpRequest.Header.Add("X-Request-ID", reqID.(string))
 	}
 

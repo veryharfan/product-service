@@ -31,13 +31,7 @@ func (u *productWriteUsecase) Create(ctx context.Context, shopID int64, req *dom
 	}
 
 	// Use transaction
-	tx, err := u.productWriteRepo.BeginTransaction(ctx)
-	if err != nil {
-		slog.ErrorContext(ctx, "[productWriteUsecase] Create", "BeginTransaction", err)
-		return nil, err
-	}
-
-	err = u.productWriteRepo.WithTransaction(ctx, tx, func(ctx context.Context, tx *sql.Tx) error {
+	err := u.productWriteRepo.WithTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		// Create product
 		if err := u.productWriteRepo.Create(ctx, product); err != nil {
 			slog.ErrorContext(ctx, "[productWriteUsecase] Create", "repository", err)
@@ -45,7 +39,7 @@ func (u *productWriteUsecase) Create(ctx context.Context, shopID int64, req *dom
 		}
 
 		// init stock
-		err = u.stockRepo.InitStockToWarehouse(ctx, domain.InitStockRequest{
+		err := u.stockRepo.InitStockToWarehouse(ctx, domain.InitStockRequest{
 			ShopID:    product.ShopID,
 			ProductID: product.ID,
 		})
@@ -55,9 +49,10 @@ func (u *productWriteUsecase) Create(ctx context.Context, shopID int64, req *dom
 		}
 		return nil
 	})
-
-	// cache stock
-	_ = u.stockRepo.CacheStock(ctx, product.ID, 0)
+	if err != nil {
+		slog.ErrorContext(ctx, "[productWriteUsecase] Create", "transaction", err)
+		return nil, err
+	}
 
 	slog.InfoContext(ctx, "[productWriteUsecase] success Create", "product_id", product.ID)
 	return &domain.CreateProductResponse{

@@ -85,8 +85,7 @@ type ProductWriteRepository interface {
 	Update(ctx context.Context, product *Product) error
 	SetActiveStatus(ctx context.Context, id int64, active bool) error
 
-	BeginTransaction(ctx context.Context) (*sql.Tx, error)
-	WithTransaction(ctx context.Context, tx *sql.Tx, fn func(context.Context, *sql.Tx) error) error
+	WithTransaction(ctx context.Context, fn func(context.Context, *sql.Tx) error) error
 }
 
 type ProductWriteUsecase interface {
