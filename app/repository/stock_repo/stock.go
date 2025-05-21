@@ -1,7 +1,9 @@
 package stockrepo
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -82,4 +84,35 @@ func (r *stockRepository) CacheStock(ctx context.Context, productID int64, stock
 
 func (r *stockRepository) key(productID int64) string {
 	return fmt.Sprintf("stock:product:%d", productID)
+}
+
+func (r *stockRepository) InitStockToWarehouse(ctx context.Context, warehouse domain.InitStockRequest) error {
+	url := fmt.Sprintf("%s/internal/warehouse-service/stocks", r.baseURL)
+	reqBody, err := json.Marshal(warehouse)
+	if err != nil {
+		slog.ErrorContext(ctx, "[stockRepository] InitStockToWarehouse", "json.Marshal", err)
+		return err
+	}
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
+	if err != nil {
+		slog.ErrorContext(ctx, "[stockRepository] InitStockToWarehouse", "http.NewRequestWithContext", err)
+		return err
+	}
+
+	pkg.AddRequestHeader(ctx, r.internalAuthHeader, httpReq)
+
+	resp, err := r.httpClient.Do(httpReq)
+	if err != nil {
+		slog.ErrorContext(ctx, "[stockRepository] InitStockToWarehouse", "httpClient.Do", err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	var res any
+	if err := pkg.DecodeResponseBody(resp, &res); err != nil {
+		slog.ErrorContext(ctx, "[stockRepository] InitStockToWarehouse", "DecodeResponseBody", err)
+		return err
+	}
+
+	return nil
 }

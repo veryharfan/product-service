@@ -66,3 +66,23 @@ func (r *productWriteRepository) SetActiveStatus(ctx context.Context, id int64, 
 
 	return nil
 }
+
+func (r *productWriteRepository) BeginTransaction(ctx context.Context) (*sql.Tx, error) {
+	tx, err := r.conn.BeginTx(ctx, nil)
+	if err != nil {
+		slog.ErrorContext(ctx, "[productWriteRepository] BeginTransaction", "beginTx", err)
+		return nil, err
+	}
+	return tx, nil
+}
+
+func (r *productWriteRepository) WithTransaction(ctx context.Context, tx *sql.Tx, fn func(context.Context, *sql.Tx) error) error {
+	if err := fn(ctx, tx); err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			slog.ErrorContext(ctx, "[productWriteRepository] WithTransaction", "rollback", rollbackErr)
+			return rollbackErr
+		}
+		return err
+	}
+	return tx.Commit()
+}

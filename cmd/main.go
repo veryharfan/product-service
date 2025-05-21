@@ -85,11 +85,11 @@ func main() {
 	reqValidator := validator.New()
 	productReadRepo := db.NewProductReadRepository(dbConn)
 	productWriteRepo := db.NewProductWriteRepository(dbConn)
-	warehouseRepo := stockrepo.NewStockRepository(redisClient, time.Duration(0), cfg.WarehouseService.Host, cfg.InternalAuthHeader)
+	stockRepo := stockrepo.NewStockRepository(redisClient, time.Duration(0), cfg.WarehouseService.Host, cfg.InternalAuthHeader)
 
-	productReadUsecase := usecase.NewProductReadUsecase(productReadRepo, warehouseRepo, cfg)
-	productWriteUsecase := usecase.NewProductWriteUsecase(productReadRepo, productWriteRepo, cfg)
-	stockUsecase := usecase.NewStockUsecase(warehouseRepo, cfg)
+	productReadUsecase := usecase.NewProductReadUsecase(productReadRepo, stockRepo, cfg)
+	productWriteUsecase := usecase.NewProductWriteUsecase(productReadRepo, productWriteRepo, stockRepo, cfg)
+	stockUsecase := usecase.NewStockUsecase(stockRepo, cfg)
 
 	productReadHandler := handler.NewProductReadHandler(productReadUsecase, reqValidator)
 	productWriteHandler := handler.NewProductWriteHandler(productWriteUsecase, reqValidator)
