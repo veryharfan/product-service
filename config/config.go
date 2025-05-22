@@ -17,6 +17,7 @@ type Config struct {
 	Redis              RedisConfig            `mapstructure:",squash"`
 	WarehouseService   WarehouseServiceConfig `mapstructure:",squash"`
 	Nats               NatsConfig             `mapstructure:",squash"`
+	Jwt                JwtConfig              `mapstructure:",squash"`
 }
 
 type DbConfig struct {
@@ -38,6 +39,11 @@ type RedisConfig struct {
 type NatsConfig struct {
 	Url        string `mapstructure:"NATS_URL" validate:"required"`
 	StreamName string `mapstructure:"NATS_STREAM_NAME" validate:"required"`
+}
+
+type JwtConfig struct {
+	SecretKey string `mapstructure:"JWT_SECRETKEY" validate:"required"`
+	Expire    int64  `mapstructure:"JWT_EXPIRE" validate:"required"`
 }
 
 type WarehouseServiceConfig struct {

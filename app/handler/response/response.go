@@ -7,27 +7,27 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type Response struct {
+type Response[T any] struct {
 	Success bool   `json:"success"`
-	Data    any    `json:"data,omitempty"`
+	Data    T      `json:"data,omitempty"`
 	Error   string `json:"error,omitempty"`
 }
 
-func Success(data any) *Response {
-	return &Response{
+func Success[T any](data T) *Response[T] {
+	return &Response[T]{
 		Success: true,
 		Data:    data,
 	}
 }
 
-func Error(err error) *Response {
-	return &Response{
+func Error(err error) *Response[any] {
+	return &Response[any]{
 		Success: false,
 		Error:   err.Error(),
 	}
 }
 
-func FromError(err error) (int, *Response) {
+func FromError(err error) (int, *Response[any]) {
 	switch {
 	case errors.Is(err, domain.ErrValidation):
 		return fiber.StatusBadRequest, Error(err)

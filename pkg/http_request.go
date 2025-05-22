@@ -29,7 +29,7 @@ func AddRequestHeader(ctx context.Context, internalAuthHeader string, httpReques
 }
 
 func DecodeResponseBody[T any](resp *http.Response, v T) error {
-	var respBody response.Response
+	var respBody response.Response[T]
 	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
 		return fmt.Errorf("failed to decode response body: %w", err)
 	}

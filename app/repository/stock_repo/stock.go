@@ -58,18 +58,14 @@ func (r *stockRepository) FetchStockFromService(ctx context.Context, productID i
 	}
 	defer resp.Body.Close()
 
-	var data []ProductStockResponse
+	var data AvailableProductStockResponse
 	if err := pkg.DecodeResponseBody(resp, &data); err != nil {
 		slog.ErrorContext(ctx, "[FetchStockFromService] Failed to decode response body", "productID", productID, "error", err)
 		return 0, err
 	}
 
-	var stock int64
-	for _, item := range data {
-		stock += item.Available
-	}
-	slog.InfoContext(ctx, "[FetchStockFromService] Stock fetched from warehouse service", "productID", productID, "stock", stock)
-	return int(stock), nil
+	slog.InfoContext(ctx, "[FetchStockFromService] Stock fetched from warehouse service", "productID", productID, "stock", data.AvailableStock)
+	return int(data.AvailableStock), nil
 }
 
 func (r *stockRepository) CacheStock(ctx context.Context, productID int64, stock int) error {

@@ -108,5 +108,5 @@ func (h *productWriteHandler) SetActiveStatus(c *fiber.Ctx) error {
 		return c.Status(status).JSON(response)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Success(nil))
+	return c.Status(fiber.StatusOK).JSON(response.Success[any](nil))
 }
