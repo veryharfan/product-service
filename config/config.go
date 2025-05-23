@@ -100,6 +100,10 @@ func InitConfig(ctx context.Context) (*Config, error) {
 		"REDIS_PORT",
 		"REDIS_PASSWORD",
 		"REDIS_DB",
+		"JWT_SECRETKEY",
+		"JWT_EXPIRE",
+		"NATS_URL",
+		"NATS_STREAM_NAME",
 	}
 
 	slog.InfoContext(ctx, "[InitConfig] Environment variables debug:")
